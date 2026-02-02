@@ -1,0 +1,20 @@
+.country{
+    border : 2px solid tomato;
+    padding : 10px;
+    border-radius: 15px;
+    margin: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.flag{
+    width: 100px;
+    height: 80px;
+    padding-left: 5px;
+}
+
+.country-visited {
+    background-color: darkolivegreen;
+}

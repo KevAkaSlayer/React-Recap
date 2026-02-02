@@ -1,5 +1,3 @@
-import "./App.css";
-import { SideNav } from "./components/SideNav";
 import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Settings from "./pages/Settings";

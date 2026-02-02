@@ -12,7 +12,9 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAppStore } from "../appStore";
+
 
 const drawerWidth = 240;
 
@@ -75,8 +77,9 @@ const Drawer = styled(MuiDrawer, {
 export const SideNav = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const [open, setOpen] = React.useState(true);
-
+  // const [open, setOpen] = React.useState(true);
+  // const updateOpen = useAppStore((state)=>state.updateOpen);
+  const open = useAppStore((state)=>state.dopen);
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -125,7 +128,6 @@ export const SideNav = () => {
                 <InboxIcon />
                 </ListItemIcon>
                 <ListItemText
-                  onClick={navigate("/")}
                   primary= "Home"
                   sx={[
                     open
