@@ -1,4 +1,3 @@
-import React from 'react'
 
 export default function Blog() {
   return (
@@ -7,4 +6,3 @@ export default function Blog() {
     </div>
   )
 }
-    

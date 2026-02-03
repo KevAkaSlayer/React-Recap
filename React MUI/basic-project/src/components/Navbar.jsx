@@ -16,8 +16,14 @@ const pages = <>
             <NavLink to='/'>Home</NavLink>
             <NavLink to='/about'>About</NavLink>
             <NavLink to='/blog'>Blog</NavLink>
+            <NavLink to='/recipes'>Recipes</NavLink>
     </>
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const settings = <>
+            <NavLink to='/account'>account</NavLink>
+            <NavLink to='/profile'>profile</NavLink>
+            <NavLink to='/dashboard'>dashboard</NavLink>
+            <NavLink to='/login'>login</NavLink>
+    </>
 
 function Navbar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -86,9 +92,11 @@ function Navbar() {
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
-              sx={{ display: { xs: 'flex', md: 'none' },gap:2}}
+              sx={{ display: { xs: 'flex', md: 'none' }}}
             >
-              {pages}
+              <Box sx={{display:"flex",flexDirection:"column",padding:1,gap : 1}}>
+                {pages}
+              </Box>
             </Menu>
           </Box>
           <AcUnitIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
@@ -135,11 +143,9 @@ function Navbar() {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-                </MenuItem>
-              ))}
+              <Box sx={{display:"flex",flexDirection:"column",padding:1,gap : 1}}>
+                {settings}
+              </Box>
             </Menu>
           </Box>
         </Toolbar>
