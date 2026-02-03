@@ -7,6 +7,11 @@ import Root from './root/Root.jsx';
 import Home from './pages/Home.jsx';
 import About from './pages/About.jsx';
 import Blog from './pages/Blog.jsx';
+import Recipes from './components/Recipes.jsx';
+import Account from './pages/Account.jsx';
+import Profile from './pages/Profile.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import Login from './pages/Login.jsx';
 
 
 const router = createBrowserRouter([
@@ -25,7 +30,28 @@ const router = createBrowserRouter([
       {
         path : "/blog",
         Component : Blog
-      } 
+      },
+      {
+        path: "/recipes",
+        loader : ()=>fetch("https://dummyjson.com/recipes"),
+        Component: Recipes
+      },
+      {
+        path:"/account",
+        Component:Account
+      },
+      {
+        path : "/profile",
+        Component:Profile
+      },
+      {
+        path:"/dashboard",
+        Component:Dashboard
+      },
+      {
+        path:"/login",
+        Component:Login
+      }
     ]
   },
 ]);
