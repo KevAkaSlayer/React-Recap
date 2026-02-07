@@ -8,9 +8,8 @@ import CardActions from "@mui/material/CardActions";
 import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { red } from "@mui/material/colors";
+import { blue, red } from "@mui/material/colors";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useLoaderData, useParams } from "react-router";
 import { addToStoreDB } from "../../utility/addToDB";
@@ -49,16 +48,17 @@ export default function BookDetails() {
     setExpanded(!expanded);
   };
 
-  const handleMArkAsRead=(id)=>{
-    addToStoreDB(id)
-  }
+  const handleMarkAsRead = (id) => {
+    console.log(id);
+    addToStoreDB(id);
+  };
 
   return (
-    <Card sx={{ maxWidth: "none",width:"auto", height: '50%' }}>
+    <Card sx={{ maxWidth: "none" }}>
       <CardHeader
         avatar={
-          <Avatar sx={{ bgcolor: red[500] }} aria-label="recipe">
-            R
+          <Avatar sx={{ bgcolor: blue[500] }} aria-label="recipe">
+            {singleBook.pages}
           </Avatar>
         }
         action={
@@ -69,12 +69,14 @@ export default function BookDetails() {
         title={singleBook.title}
         subheader={singleBook.published_date}
       />
-      <CardMedia
+      <div className="w-2/4 mx-auto">
+        <CardMedia
         component="img"
-        height="100"
+        width="50%"
         image={singleBook.cover_image}
         alt="book"
       />
+      </div>
       <CardContent>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {singleBook.description}
@@ -84,19 +86,9 @@ export default function BookDetails() {
         <IconButton aria-label="add to favorites">
           <FavoriteIcon />
         </IconButton>
-        <IconButton onClick={()=>handleMArkAsRead(id)} aria-label="mar">
-          <Typography>
-            Mark As Read
-          </Typography>
+        <IconButton onClick={() => handleMarkAsRead(id)} aria-label="mar">
+          <Typography>Mark As Read</Typography>
         </IconButton>
-        <ExpandMore
-          expand={expanded}
-          onClick={handleExpandClick}
-          aria-expanded={expanded}
-          aria-label="show more"
-        >
-          <ExpandMoreIcon />
-        </ExpandMore>
       </CardActions>
     </Card>
   );
