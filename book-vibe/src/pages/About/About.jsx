@@ -62,7 +62,7 @@ export default function About() {
         onChange={handleChange("panel1")}
       >
         <AccordionSummary aria-controls="panel1d-content" id="panel1d-header">
-          <Typography component="span">Collapsible Group Item #1</Typography>
+          <Typography component="span">Who we are?</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
@@ -78,7 +78,7 @@ export default function About() {
         onChange={handleChange("panel2")}
       >
         <AccordionSummary aria-controls="panel2d-content" id="panel2d-header">
-          <Typography component="span">Collapsible Group Item #2</Typography>
+          <Typography component="span">Our mission and vision</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
@@ -94,7 +94,7 @@ export default function About() {
         onChange={handleChange("panel3")}
       >
         <AccordionSummary aria-controls="panel3d-content" id="panel3d-header">
-          <Typography component="span">Collapsible Group Item #3</Typography>
+          <Typography component="span">Our Future Goal</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>

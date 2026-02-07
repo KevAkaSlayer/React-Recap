@@ -4,8 +4,10 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import { useLoaderData } from "react-router";
-import { useEffect } from "react";
-import { getStoredBook } from "../../utility/addToDB";
+import { useEffect, useState } from "react";
+import { deleteFromStoreDB, getStoredBook } from "../../utility/addToDB";
+import { Link } from "react-router";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -38,15 +40,26 @@ function a11yProps(index) {
 
 export default function ReadList() {
   const books = useLoaderData();
-  const [value, setValue] = React.useState(0);
+  const [readList, setReadList] = useState([]);
+  const [value, setValue] = useState(0);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
-  useEffect(()=>{
-    const storedBookData = getStoredBook()
-  })
+  useEffect(() => {
+    const storedBookData = getStoredBook();
+    const myReadList = books.filter((book) =>
+      storedBookData.includes(book.isbn_13),
+    );
+    setReadList(myReadList);
+  }, []);
+
+  const handleDelete=(id)=>{
+    deleteFromStoreDB(id);
+    const updatedReadList = readList.filter((book) => book.isbn_13 !== id);
+    setReadList(updatedReadList);
+  }
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -56,12 +69,58 @@ export default function ReadList() {
           onChange={handleChange}
           aria-label="basic tabs example"
         >
-          <Tab label="Read List" {...a11yProps(0)} sx={{color:"white"}}/>
-          <Tab label="Wish List" {...a11yProps(1)} sx={{color:"white"}}/>
+          <Tab label="Read List" {...a11yProps(0)} sx={{ color: "white" }} />
+          {/* <Tab label="Wish List" {...a11yProps(1)} sx={{ color: "white" }} /> */}
         </Tabs>
       </Box>
       <CustomTabPanel value={value} index={0}>
-        Read List
+        <div className="overflow-x-auto">
+          <table className="table">
+            {/* head */}
+            <thead>
+              <tr>
+                <th></th>
+                <th>Author</th>
+                <th>Title</th>
+                <th>Published Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {readList.map((book) => (
+                <tr>
+                  <th>
+                    <label>
+                      <input type="checkbox" className="checkbox" />
+                    </label>
+                  </th>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="avatar">
+                        <div className="mask mask-squircle h-12 w-12">
+                          <img src={book.cover_image} alt="book image" />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-bold">{book.author}</div>
+                        <div className="text-sm opacity-50">United States</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{book.title}</td>
+                  <td>{book.published_date}</td>
+                  <th>
+                    <Link to={`/book/${book.isbn_13}`}>
+                      <button className="btn btn-ghost btn-xs">details</button>
+                    </Link>
+                  </th>
+                  <th>
+                      <button onClick={()=>handleDelete(book.isbn_13)}><DeleteForeverIcon/></button>
+                  </th>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
         Wishlist
