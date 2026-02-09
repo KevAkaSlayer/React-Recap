@@ -7,6 +7,7 @@ import MuiAccordionSummary, {
 } from "@mui/material/AccordionSummary";
 import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
+import { Helmet } from "react-helmet-async";
 
 const Accordion = styled((props) => (
   <MuiAccordion disableGutters elevation={0} square {...props} />
@@ -54,6 +55,9 @@ export default function About() {
 
   return (
     <div>
+      <Helmet>
+        <title>About | Book Vibe</title>
+      </Helmet>
       <div className="p-2 flex justify-center items-center text-3xl">
         <p>About Us</p>
       </div>

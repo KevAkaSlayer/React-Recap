@@ -13,6 +13,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useLoaderData, useParams } from "react-router";
 import { addToStoreDB } from "../../utility/addToDB";
+import { Helmet } from "react-helmet-async";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -43,6 +44,9 @@ export default function BookDetails() {
   const data = useLoaderData();
   const singleBook = data.find((book) => book.isbn_13 === id);
   const [expanded, setExpanded] = React.useState(false);
+  const pageTitle = singleBook
+    ? `${singleBook.title} | Book Vibe`
+    : "Book Details | Book Vibe";
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -55,6 +59,9 @@ export default function BookDetails() {
 
   return (
     <Card sx={{ maxWidth: "none" }}>
+      <Helmet>
+        <title>{pageTitle}</title>
+      </Helmet>
       <CardHeader
         avatar={
           <Avatar sx={{ bgcolor: blue[500] }} aria-label="recipe">
@@ -71,11 +78,11 @@ export default function BookDetails() {
       />
       <div className="w-2/4 mx-auto">
         <CardMedia
-        component="img"
-        width="50%"
-        image={singleBook.cover_image}
-        alt="book"
-      />
+          component="img"
+          width="50%"
+          image={singleBook.cover_image}
+          alt="book"
+        />
       </div>
       <CardContent>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
