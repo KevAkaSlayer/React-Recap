@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { deleteFromStoreDB, getStoredBook } from "../../utility/addToDB";
 import { Link } from "react-router";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import { Helmet } from "react-helmet-async";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -64,6 +65,9 @@ export default function ReadList() {
 
   return (
     <Box sx={{ width: "100%" }}>
+      <Helmet>
+        <title>Read List | Book Vibe</title>
+      </Helmet>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={value}
@@ -115,7 +119,10 @@ export default function ReadList() {
                     </Link>
                   </th>
                   <th>
-                    <button className="btn btn-sm" onClick={() => handleDelete(book.isbn_13)}>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => handleDelete(book.isbn_13)}
+                    >
                       <DeleteForeverIcon />
                     </button>
                   </th>

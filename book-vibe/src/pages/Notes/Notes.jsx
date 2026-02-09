@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createNote, deleteNote, getNotes } from "../../utility/addToDB";
+import { Helmet } from "react-helmet-async";
 
 export default function Notes() {
   const [notes, setNotes] = useState([]);
@@ -33,17 +34,19 @@ export default function Notes() {
     const noteToEdit = notes.find((note) => note.title === title);
     const newNoteContent = prompt("Edit your note:", noteToEdit.note);
     if (newNoteContent !== null) {
-        const updatedNote = { ...noteToEdit, note: newNoteContent };
-        deleteNote(title);
-        const updatedNotes = createNote(updatedNote);
-        setNotes(updatedNotes);
-        alert("Note updated successfully!");
+      const updatedNote = { ...noteToEdit, note: newNoteContent };
+      deleteNote(title);
+      const updatedNotes = createNote(updatedNote);
+      setNotes(updatedNotes);
+      alert("Note updated successfully!");
     }
   };
 
-
   return (
     <div>
+      <Helmet>
+        <title>Notes | Book Vibe</title>
+      </Helmet>
       <form onSubmit={handleSubmit}>
         <div className="hero bg-base-200">
           <div className="hero-content flex-col lg:flex-row-reverse">
@@ -79,7 +82,12 @@ export default function Notes() {
               <h2 className="card-title">{note.title}</h2>
               <p>{note.note}</p>
               <div className="card-actions justify-end">
-                <button onClick={()=> handleEdit(note.title)} className="btn btn-primary">Edit</button>
+                <button
+                  onClick={() => handleEdit(note.title)}
+                  className="btn btn-primary"
+                >
+                  Edit
+                </button>
                 <button
                   onClick={() => handleDelete(note.title)}
                   className="btn btn-ghost"
