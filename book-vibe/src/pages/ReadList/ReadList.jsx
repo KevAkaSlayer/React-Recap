@@ -7,7 +7,7 @@ import { useLoaderData } from "react-router";
 import { useEffect, useState } from "react";
 import { deleteFromStoreDB, getStoredBook } from "../../utility/addToDB";
 import { Link } from "react-router";
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -49,17 +49,18 @@ export default function ReadList() {
 
   useEffect(() => {
     const storedBookData = getStoredBook();
-    const myReadList = books.filter((book) =>
+    const myReadList = Object.values(books).filter((book) =>
       storedBookData.includes(book.isbn_13),
     );
     setReadList(myReadList);
   }, []);
 
-  const handleDelete=(id)=>{
+  const handleDelete = (id) => {
+    alert("deleted successfully!");
     deleteFromStoreDB(id);
     const updatedReadList = readList.filter((book) => book.isbn_13 !== id);
     setReadList(updatedReadList);
-  }
+  };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -114,7 +115,9 @@ export default function ReadList() {
                     </Link>
                   </th>
                   <th>
-                      <button onClick={()=>handleDelete(book.isbn_13)}><DeleteForeverIcon/></button>
+                    <button className="btn btn-sm" onClick={() => handleDelete(book.isbn_13)}>
+                      <DeleteForeverIcon />
+                    </button>
                   </th>
                 </tr>
               ))}
