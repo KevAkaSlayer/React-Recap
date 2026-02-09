@@ -8,37 +8,41 @@ import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import Container from "@mui/material/Container";
 import Avatar from "@mui/material/Avatar";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { NavLink } from "react-router";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import auth from "../../firebase/firebase.init";
 
-const pages = (
-  <>
-    <NavLink to="/">Home</NavLink>
-    <NavLink to="/about">About</NavLink>
-    <NavLink to="/readlist">ReadList</NavLink>
-  </>
-);
-const settings = ["Profile", "Account", "Dashboard", "Logout"];
+const navLinks = [
+  { to: "/", label: "Home" },
+  { to: "/about", label: "About" },
+  { to: "/readlist", label: "ReadList" },
+  { to: "/notes", label: "Notes" },
+];
 
 function Navbar() {
+  const [user, setUser] = React.useState(null);
   const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser || null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
   };
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
+  const handleLogout = () => {
+    signOut(auth).catch(() => {
+      alert("Logout failed. Please try again.");
+    });
   };
 
   return (
@@ -50,7 +54,7 @@ function Navbar() {
             variant="h6"
             noWrap
             component="a"
-            href="#app-bar-with-responsive-menu"
+            href="/"
             sx={{
               mr: 2,
               display: { xs: "none", md: "flex" },
@@ -91,7 +95,20 @@ function Navbar() {
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: "block", md: "none" } }}
             >
-              <div className="flex flex-col p-2">{pages}</div>
+              <div className="flex flex-col p-2 gap-2">
+                {navLinks.map((link) => (
+                  <NavLink key={link.to} to={link.to}>
+                    {link.label}
+                  </NavLink>
+                ))}
+                {user ? (
+                  <button className="btn btn-ghost" onClick={handleLogout}>
+                    Logout
+                  </button>
+                ) : (
+                  <NavLink to="/login">Login</NavLink>
+                )}
+              </div>
             </Menu>
           </Box>
           <MenuBookIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
@@ -114,38 +131,32 @@ function Navbar() {
             Book Vibe
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            <div className="flex gap-2 font-semibold">{pages}</div>
+            <div className="flex gap-2 font-semibold">
+              {navLinks.map((link) => (
+                <NavLink key={link.to} to={link.to}>
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
           </Box>
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: "45px" }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: "center" }}>
-                    {setting}
-                  </Typography>
-                </MenuItem>
-              ))}
-            </Menu>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <IconButton sx={{ p: 0 }}>
+                  <Avatar
+                    alt={user.displayName || "User"}
+                    src={user.photoURL || ""}
+                  />
+                </IconButton>
+                <button className="btn btn-ghost" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <NavLink className="btn btn-ghost" to="/login">
+                Login
+              </NavLink>
+            )}
           </Box>
         </Toolbar>
       </Container>
