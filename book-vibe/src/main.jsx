@@ -9,5 +9,5 @@ createRoot(document.getElementById("root")).render(
   <HelmetProvider>
     <RouterProvider router={router}></RouterProvider>
     <ToastContainer></ToastContainer>
-  </HelmetProvider>,
+  </HelmetProvider>
 );
