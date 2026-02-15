@@ -1,4 +1,5 @@
 import React from "react";
+import book from "../../assets/books.jpg";
 
 export default function Banner() {
   return (
@@ -6,18 +7,15 @@ export default function Banner() {
       <div
         className="hero "
         style={{
-          backgroundImage:
-            "url(https://img.daisyui.com/images/stock/photo-1507358522600-9f71e620c44e.webp)",
+          backgroundImage: `url(${book})`,
         }}
       >
         <div className="hero-overlay"></div>
         <div className="hero-content text-neutral-content text-center">
           <div className="max-w-md">
-            <h1 className="mb-5 text-5xl font-bold">Hello there</h1>
+            <h1 className="mb-5 text-5xl font-bold">Today a reader, Tomorrow a leader.</h1>
             <p className="mb-5">
-              Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda
-              excepturi exercitationem quasi. In deleniti eaque aut repudiandae
-              et a id nisi.
+              "A reader lives a thousand lives before he dies. The man who never reads lives only one." – George Martin
             </p>
             <button className="btn btn-primary">Get Started</button>
           </div>
