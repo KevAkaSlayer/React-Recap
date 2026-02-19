@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://app-assets.web.app/widgetsdk/ZohoEmbededAppSDK.min.js"></script>
+    <title>Escalation Details Popup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .popup {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 500px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .popup-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .popup-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .popup-header p {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .popup-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #111827;
+            transition: all 0.2s;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .popup-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-cancel {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-cancel:hover {
+            background-color: #f9fafb;
+        }
+
+        .btn-save {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #2563eb;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .demo-trigger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-trigger:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <!-- <div class="overlay" id="popupOverlay"> -->
+        <div class="popup">
+            <div class="popup-header">
+                <h2>Escalation Details</h2>
+                <p>Provide information to escalate this case:</p>
+            </div>
+            
+            <div class="popup-body">
+                <form id="escalationForm">
+                    <div class="form-group">
+                        <label for="escalationLevel">Escalation Level:</label>
+                        <select id="escalationLevel" name="escalationLevel">
+                            <option value="">Select Level</option>
+                            <option value="E1">E1</option>
+                            <option value="E2">E2</option>
+                            <option value="E3">E3</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reason">Reason:</label>
+                        <input type="text" id="reason" name="reason" placeholder="Enter escalation reason">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priority">Priority Update:</label>
+                        <input type="text" id="priority" name="priority" value="High" readonly style="background-color: #f9fafb;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes:</label>
+                        <textarea id="notes" name="notes" placeholder="Enter additional notes"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="popup-footer">
+                <button class="btn btn-cancel" onclick="hidePopup()">Cancel</button>
+                <button class="btn btn-save" onclick="saveEscalation()">Save</button>
+            </div>
+        </div>
+    <!-- </div> -->
+
+    <script>
+
+        ZOHO.embeddedApp.init();
+
+        function hidePopup(data){
+            $Client.close({data});
+        }
+
+        function saveEscalation() {
+            const form = document.getElementById('escalationForm');
+            const formData = {
+                escalationLevel: form.escalationLevel.value,
+                reason: form.reason.value,
+                priority: form.priority.value,
+                notes: form.notes.value
+            };
+
+            console.log('Escalation Data:', formData);
+            hidePopup(formData);
+        }
+    </script>
+</body>
+</html>

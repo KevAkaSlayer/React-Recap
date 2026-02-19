@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://app-assets.web.app/widgetsdk/ZohoEmbededAppSDK.min.js"></script>
+    <style>
+      .button-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 20px;
+      }
+      button {
+        padding: 10px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="button-container">
+      <button id="addNotes">Add Notes</button>
+      <button id="approveRecord">Approve Record</button>
+      <button id="attachFile">Attach File</button>
+      <button id="coql">COQL</button>
+      <button id="deleteRecord">Delete Record</button>
+      <button id="delinkRelatedRecord">Delink Related Record</button>
+      <button id="getAllActions">Get All Actions</button>
+      <button id="getAllProfiles">Get All Profiles</button>
+      <button id="getAllRecords">Get All Records</button>
+      <button id="getAllUsers">Get All Users</button>
+      <button id="getApprovalById">Get Approval By Id</button>
+      <button id="getApprovalRecords">Get Approval Records</button>
+      <button id="getApprovalsHistory">Get Approvals History</button>
+      <button id="getBluePrint">Get BluePrint</button>
+      <button id="getFile">Get File</button>
+      <button id="getOrgVariable">Get Org Variable</button>
+      <button id="getProfile">Get Profile</button>
+      <button id="getRecord">Get Record</button>
+      <button id="getReleatedRecords">Get Related Records</button>
+      <button id="getUser">Get User</button>
+      <button id="insertRecord">Insert Record</button>
+      <button id="searchRecord">Search Record</button>
+      <button id="updateBluePrint">Update BluePrint</button>
+      <button id="updateProfile">Update Profile</button>
+      <button id="updateRecord">Update Record</button>
+      <button id="updateReleatedRecords">Update Related Records</button>
+      <button id="uploadFile">Upload File</button>
+      <button id="upsertRecord">Upsert Record</button>
+    </div>
+
+    <script>
+      ZOHO.embeddedApp.on("PageLoad", function(data) {
+        console.log("Widget Loaded");
+      });
+
+      // Add Notes
+      document.getElementById('addNotes').onclick = function() {
+        var config = {
+          "entity_id": "440280000000234001",  // Replace with actual record ID
+          "note_title": "Sample Note",
+          "note_content": "Sample note content"
+        };
+        ZOHO.CRM.API.addNotes(config).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Approve Record
+      document.getElementById('approveRecord').onclick = function() {
+        var config = {
+          "action": "approve",
+          "comments": "Approved by Manager",
+          "record": {
+            "id": "440280000000234001"  // Replace with actual record ID
+          }
+        };
+        ZOHO.CRM.API.approveRecord("Deals", config).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Attach File
+      document.getElementById('attachFile').onclick = function() {
+        var config = {
+          "CONTENT": "Sample file content",
+          "FILE_NAME": "sample.txt"
+        };
+        ZOHO.CRM.API.attachFile(config).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // COQL Query
+      document.getElementById('coql').onclick = function() {
+        var query = "select Last_Name, Account_Name, Email from Contacts where Last_Name != null";
+        ZOHO.CRM.API.coql(query).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Delete Record
+      document.getElementById('deleteRecord').onclick = function() {
+        ZOHO.CRM.API.deleteRecord({
+          Entity: "Leads",
+          RecordID: "440280000000234001"  // Replace with actual record ID
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Delink Related Record
+      document.getElementById('delinkRelatedRecord').onclick = function() {
+        ZOHO.CRM.API.delinkRelatedRecord({
+          Entity: "Leads",
+          RecordID: "440280000000234001",  // Replace with actual record ID
+          RelatedList: "Contacts",
+          RelatedRecordID: "440280000000234002"  // Replace with actual related record ID
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get All Actions
+      document.getElementById('getAllActions').onclick = function() {
+        ZOHO.CRM.API.getAllActions().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get All Profiles
+      document.getElementById('getAllProfiles').onclick = function() {
+        ZOHO.CRM.API.getAllProfiles().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get All Records
+      document.getElementById('getAllRecords').onclick = function() {
+        ZOHO.CRM.API.getAllRecords({Entity: "Leads"}).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get All Users
+      document.getElementById('getAllUsers').onclick = function() {
+        ZOHO.CRM.API.getAllUsers().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get Approval By Id
+      document.getElementById('getApprovalById').onclick = function() {
+        ZOHO.CRM.API.getApprovalById("440280000000234001").then(function(data) {  // Replace with actual approval ID
+          console.log(data);
+        });
+      };
+
+      // Get Approval Records
+      document.getElementById('getApprovalRecords').onclick = function() {
+        ZOHO.CRM.API.getApprovalRecords().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get Approvals History
+      document.getElementById('getApprovalsHistory').onclick = function() {
+        ZOHO.CRM.API.getApprovalsHistory().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get BluePrint
+      document.getElementById('getBluePrint').onclick = function() {
+        ZOHO.CRM.API.getBluePrint("Deals", "440280000000234001").then(function(data) {  // Replace with actual deal ID
+          console.log(data);
+        });
+      };
+
+      // Get File
+      document.getElementById('getFile').onclick = function() {
+        ZOHO.CRM.API.getFile("440280000000234001").then(function(data) {  // Replace with actual file ID
+          console.log(data);
+        });
+      };
+
+      // Get Org Variable
+      document.getElementById('getOrgVariable').onclick = function() {
+        ZOHO.CRM.API.getOrgVariable("variable_name").then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get Profile
+      document.getElementById('getProfile').onclick = function() {
+        ZOHO.CRM.API.getProfile().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get Record
+      document.getElementById('getRecord').onclick = function() {
+        ZOHO.CRM.API.getRecord({
+          Entity: "Leads",
+          RecordID: "440280000000234001"  // Replace with actual record ID
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get Related Records
+      document.getElementById('getReleatedRecords').onclick = function() {
+        ZOHO.CRM.API.getRelatedRecords({
+          Entity: "Leads",
+          RecordID: "440280000000234001",  // Replace with actual record ID
+          RelatedList: "Contacts"
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Get User
+      document.getElementById('getUser').onclick = function() {
+        ZOHO.CRM.API.getUser().then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Insert Record
+      document.getElementById('insertRecord').onclick = function() {
+        ZOHO.CRM.CURRENT_RECORD.getRecord().then(function(data){
+          var recordData = {
+            "Last_Name": "Smith",
+            "Email": "smith@example.com"
+          };
+          return ZOHO.CRM.API.insertRecord({
+            Entity: data.data[0].module,
+            Record: recordData
+          });
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Search Record
+      document.getElementById('searchRecord').onclick = function() {
+        ZOHO.CRM.CURRENT_RECORD.getRecord().then(function(data){
+          return ZOHO.CRM.API.searchRecord({
+            Entity: data.data[0].module,
+            Type: "word",
+            Query: "Smith"
+          });
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Update BluePrint
+      document.getElementById('updateBluePrint').onclick = function() {
+        ZOHO.CRM.CURRENT_RECORD.getRecord().then(function(data){
+          var config = {
+            "blueprint_transition_id": "TRANSITION_ID", // Replace with actual transition ID
+            "data": {
+              "Phone": "1234567890"
+            }
+          };
+          return ZOHO.CRM.API.updateBluePrint(data.data[0].module, data.data[0].id, config);
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Update Profile
+      document.getElementById('updateProfile').onclick = function() {
+        var config = {
+          "name": "Profile Name",
+          "description": "Profile Description"
+        };
+        ZOHO.CRM.API.updateProfile("PROFILE_ID", config).then(function(data) { // Replace with actual profile ID
+          console.log(data);
+        });
+      };
+
+      // Update Record
+      document.getElementById('updateRecord').onclick = function() {
+        var recordData = {
+          "Last_Name": "Smith Updated",
+          "Email": "smith.updated@example.com"
+        };
+        ZOHO.CRM.API.updateRecord({
+          Entity: "Leads",
+          RecordID: "440280000000234001",  // Replace with actual record ID
+          Record: recordData
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Update Related Records
+      document.getElementById('updateReleatedRecords').onclick = function() {
+        var recordData = {
+          "Contact_Name": "John Doe",
+          "Email": "john.doe@example.com"
+        };
+        ZOHO.CRM.API.updateRelatedRecords({
+          Entity: "Leads",
+          RecordID: "440280000000234001",  // Replace with actual record ID
+          RelatedList: "Contacts",
+          RelatedRecordID: "440280000000234002",  // Replace with actual related record ID
+          Record: recordData
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Upload File
+      document.getElementById('uploadFile').onclick = function() {
+        var file = new File(["Hello World!"], "hello.txt", {
+          type: "text/plain"
+        });
+        ZOHO.CRM.API.uploadFile({
+          Entity: "Leads",
+          RecordID: "440280000000234001",  // Replace with actual record ID
+          File: file
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+
+      // Upsert Record
+      document.getElementById('upsertRecord').onclick = function() {
+        var recordData = {
+          "Last_Name": "Smith",
+          "Email": "smith@example.com"
+        };
+        ZOHO.CRM.API.upsertRecord({
+          Entity: "Leads",
+          Record: recordData,
+          Trigger: ["workflow"]
+        }).then(function(data) {
+          console.log(data);
+        });
+      };
+    </script>
+  </body>
+</html>

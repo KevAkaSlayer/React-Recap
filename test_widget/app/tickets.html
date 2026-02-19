@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://app-assets.web.app/widgetsdk/ZohoEmbededAppSDK.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Desk Tickets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #fff;
+            padding:0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 30px;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f1f3f6;
+        }
+
+        th {
+            padding: 10px 20px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f3f5;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        td {
+            padding: 12px 20px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .ticket-id {
+            color: #4a90e2;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .ticket-id:hover {
+            text-decoration: underline;
+        }
+
+        .subject {
+            color: #6c757d;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status.open {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .priority {
+            font-weight: 500;
+        }
+
+        .priority.high {
+            color: #d32f2f;
+        }
+
+        .priority.medium {
+            color: #f57c00;
+        }
+
+        .priority.low {
+            color: #388e3c;
+        }
+
+        .created {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .escalate-btn {
+            padding: 6px 16px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .escalate-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+
+        .escalate-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="ticket-id">TCK-0001</a></td>
+                        <td class="subject">Unable to log in to portal</td>
+                        <td><span class="status open">Open</span></td>
+                        <td><span class="priority high">High</span></td>
+                        <td class="created">20/09/2025, 15:45:00</td>
+                        <td><button class="escalate-btn" onclick="openEscalationPopup('TCK-0001')">Escalate</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="ticket-id">TCK-0002</a></td>
+                        <td class="subject">Payment not reflecting</td>
+                        <td><span class="status open">Open</span></td>
+                        <td><span class="priority medium">Medium</span></td>
+                        <td class="created">20/09/2025, 16:35:00</td>
+                        <td><button class="escalate-btn" onclick="openEscalationPopup('TCK-0002')">Escalate</button></td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="ticket-id">TCK-0003</a></td>
+                        <td class="subject">Error while uploading documents</td>
+                        <td><span class="status open">Open</span></td>
+                        <td><span class="priority high">High</span></td>
+                        <td class="created">21/09/2025, 14:10:00</td>
+                        <td><button class="escalate-btn" onclick="openEscalationPopup('TCK-0003')">Escalate</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        ZOHO.embeddedApp.init();
+        async function openEscalationPopup(ticketId){
+          let confirmationResult = await ZDK.Client.showConfirmation('Escalating this case will mark it High Priority, notify the Customer Success Manager, and start SLA tracking. Do you want to continue?', 'Yes. Proceed', 'No');
+            if(confirmationResult){
+              try{
+                const escalationResponse  = await ZDK.Client.openPopup({
+                  api_name:'EscalationPopup',
+                  type:'widget',
+                  header:'Escalation Information',
+                  animation_type: 1,
+                  width:'500px',
+                  height: '650px'
+                },
+                {data: ''});
+
+                if(escalationResponse.data.escalationLevel){
+                  ZDK.Client.showMessage('Case escalated successfully', { type: 'success'});
+                }
+              }catch(error){
+                console.error('Error in popup action', error);
+              }
+            }
+        }
+    </script>
+</body>
+</html>
