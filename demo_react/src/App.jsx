@@ -61,6 +61,15 @@ function App() {
     setFile(selectedFile);
   };
 
+  const handleCreateRecord = (e)=>{
+    ZOHO.CRM.UI.Record.create({Entity:"Leads"})
+    .then(function(data){
+        console.log(data)
+    })
+  }
+
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setUpdateStatus("Updating...");
@@ -223,8 +232,8 @@ function App() {
               Submit
             </button>
           </form>
-
-          <Link to="/create-record">create record</Link>
+          <AddRecordButton/>
+          <button className="btn btn-neutral" onClick={handleCreateRecord}>create record</button>
         </div>
       ) : (
         <div className="App">
