@@ -12,7 +12,6 @@ import Paper from "@mui/material/Paper";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
-
 const ZOHO = window.ZOHO;
 
 function App() {
@@ -40,7 +39,7 @@ function App() {
           setRecordData(data);
         },
       );
-      ZOHO.CRM.UI.Resize({ height: "80%", width: "60%" }).then(function (data) {
+      ZOHO.CRM.UI.Resize({ height: "80%", width: "50%" }).then(function (data) {
         console.log(data);
       });
       ZOHO.CRM.API.getRelatedRecords({
@@ -154,15 +153,19 @@ function App() {
         setTimeout(() => setUpdateStatus(""), 2000);
       });
   };
-  const createQuote=()=>{
-    console.log("clicked")
-  }
+  const createQuote = () => {
+    ZOHO.CRM.UI.Record.create({ Entity: "Quotes" }).then(function (data) {
+      console.log(data);
+    });
+  };
 
-  const handleEdit=(id)=>{
-    console.log("clicked : ", id);
-  }
+  const handleEdit = (id) => {
+    ZOHO.CRM.META.getFields({ Entity: "Quotes" }).then(function (data) {
+      console.log(data);
+    });
+  };
   const handleDelete = (id) => {
-    console.log(id)
+    console.log(id);
     ZOHO.CRM.API.delinkRelatedRecord({
       Entity: entity,
       RecordID: entityId,
@@ -262,7 +265,9 @@ function App() {
           </form>
           <div className="flex justify-between m-2">
             <h2>Related Quotes</h2>
-            <button onClick={createQuote} className="btn btn-neutral">Create Quotes</button>
+            <button onClick={createQuote} className="btn btn-neutral">
+              Create Quotes
+            </button>
           </div>
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -291,7 +296,10 @@ function App() {
                     <TableCell align="right">{record?.Grand_Total}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <button onClick={()=>handleEdit(record?.id)} className="btn btn-sm">
+                        <button
+                          onClick={() => handleEdit(record?.id)}
+                          className="btn btn-sm"
+                        >
                           <ModeEditIcon />
                         </button>
                         <button
