@@ -1,228 +1,165 @@
 /**
- * Zoho SDK wrappers for CRM + Zoho Books.
+ * Zoho SDK + Books API layer.
  *
- * All Books API calls use ZOHO.CRM.CONNECTION.invoke("zoho_books_testing", req_data).
- * No API actions need to be pre-configured inside the connection — only the
- * OAuth connection itself ("zoho_books_testing") needs to exist in:
- *   Zoho CRM → Settings → Developer Space → Connections
+ * Every Books call goes through booksRequest() which handles:
+ *   - URL construction with organization_id
+ *   - CONNECTION.invoke call
+ *   - Response parsing (res.details.statusMessage)
  *
- * org_id : 771340721
+ * Connection: "zoho_books_testing" | Org: 771340721
  */
 
-export const ZOHO = window.ZOHO
-
-const ORG_ID    = '771340721'
+const ZOHO = window.ZOHO
+const ORG_ID = '771340721'
 const CONN_NAME = 'zoho_books_testing'
-const BASE_URL  = 'https://www.zohoapis.com/books/v3'
+const BASE = 'https://www.zohoapis.com/books/v3'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Core HTTP helper
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Core helper ──────────────────────────────────────────────────────────────
 
 /**
- * Make a Zoho Books API call through the CRM connection.
- *
- * @param {'GET'|'POST'|'PUT'|'DELETE'} method
- * @param {string}  path    e.g. "contacts", "bills", "bills/123"
- * @param {object}  params  URL query params (always includes organization_id)
- * @param {object|null} body  JSON body for POST / PUT (null for GET/DELETE)
+ * @param {'GET'|'POST'|'PUT'} method
+ * @param {string} path - e.g. "bills", "bills/123", "bills/123/status/open"
+ * @param {object} [data] - GET: query params | POST/PUT: JSON body
  */
-async function booksAPI({ method = 'GET', path, params = {}, body = null }) {
-  // For POST/PUT: put organization_id in the URL query string so it's always present
-  // and pass the JSON payload via parameters with param_type 2 (body).
-  // For GET/DELETE: everything goes as query params with param_type 1.
-
+async function booksRequest(method, path, data) {
   const isWrite = method === 'POST' || method === 'PUT'
 
-  const url = isWrite
-    ? `${BASE_URL}/${path}?organization_id=${ORG_ID}`
-    : `${BASE_URL}/${path}`
+  // Build URL: always includes organization_id; GET params appended to URL
+  let url = `${BASE}/${path}?organization_id=${ORG_ID}`
+  if (!isWrite && data) {
+    const qs = Object.entries(data)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&')
+    if (qs) url += '&' + qs
+  }
 
   const req_data = {
     url,
     method,
-    headers: { 'Content-Type': 'application/json' },
-    // param_type 1 = URL query params (GET)
-    // param_type 3 = raw JSON body (POST/PUT to JSON APIs like Zoho Books)
-    param_type: isWrite ? 3 : 1,
-    parameters: isWrite
-      ? JSON.stringify(body ?? {})
-      : { organization_id: ORG_ID, ...params },
+    param_type: 1,
+    parameters: isWrite ? { JSONString: JSON.stringify(data ?? {}) } : {},
   }
 
-  console.log(`[booksAPI] ${method} /${path}`, req_data)
+  console.log(`[Books] ${method} /${path}`)
 
   const res = await ZOHO.CRM.CONNECTION.invoke(CONN_NAME, req_data)
 
-  console.log(`[booksAPI] ${method} /${path} raw response:`, JSON.stringify(res, null, 2))
-  console.log(`[booksAPI] res.code:`, res?.code)
-  console.log(`[booksAPI] res.details type:`, typeof res?.details)
-  console.log(`[booksAPI] res.details:`, res?.details)
-
-  // CONNECTION.invoke wraps the actual API response inside res.details.
-  // res.code === 'SUCCESS' means the connection call itself worked.
   if (res?.code !== 'SUCCESS') {
-    throw new Error(`Connection error (code: ${res?.code}): ${res?.message ?? JSON.stringify(res)}`)
+    console.error('[Books] connection failed:', res)
+    throw new Error(res?.message ?? 'Connection invoke failed')
   }
 
-  // res.details can be:
-  //   A) The Books JSON object directly          → { code: 0, contacts: [...], ... }
-  //   B) A JSON string of the Books response     → '{"code":0,"contacts":[...]}'
-  //   C) A wrapper object with a .body property  → { statusCode: 200, body: '{"code":0,...}' }
-  const details = res.details
-
-  // Case C: { statusCode, body, headers }
-  if (details && typeof details === 'object' && 'body' in details) {
-    console.log(`[booksAPI] detected wrapper — res.details.body:`, details.body)
-    const body = details.body
-    if (typeof body === 'string') {
-      try { return JSON.parse(body) } catch { return body }
-    }
-    return body
+  // Actual Books JSON lives in res.details.statusMessage
+  const sm = res.details?.statusMessage
+  if (typeof sm === 'string') {
+    try { return JSON.parse(sm) } catch { return sm }
   }
-
-  // Case B: plain JSON string
-  if (typeof details === 'string') {
-    try { return JSON.parse(details) } catch { return details }
-  }
-
-  // Case A: already a plain object
-  return details ?? res
+  return sm ?? {}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Zoho Books API success check
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Success check ────────────────────────────────────────────────────────────
 
-/** Books API returns code:0 on success */
 export function isBooksSuccess(res) {
   return res?.code === 0
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CRM widget lifecycle
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function closeWidget() {
-  return ZOHO.CRM.UI.Popup.close()
-}
-
-export function closeWidgetAndReload() {
-  return ZOHO.CRM.UI.Popup.closeReload()
-}
+// ── CRM SDK ──────────────────────────────────────────────────────────────────
 
 export function initSDK() {
   return new Promise((resolve) => {
     ZOHO.embeddedApp.on('PageLoad', (data) => {
-      console.log('[initSDK] PageLoad:', data)
+      console.log('[SDK] PageLoad:', data)
       resolve(data)
     })
     ZOHO.embeddedApp.init()
   })
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CRM Vendor record
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function getCRMVendor(recordId) {
-  console.log('[getCRMVendor] recordId:', recordId)
-  return ZOHO.CRM.API.getRecord({ Entity: 'Vendors', RecordID: recordId }).then((res) => {
-    console.log('[getCRMVendor] response:', res)
-    return res?.data?.[0] ?? null
-  })
+export async function getCRMVendor(recordId) {
+  const res = await ZOHO.CRM.API.getRecord({ Entity: 'Vendors', RecordID: recordId })
+  return res?.data?.[0] ?? null
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Zoho Books — Vendors (contacts)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export async function getBooksVendors(searchText = '') {
-  console.log('[getBooksVendors] searchText:', searchText)
-  const res = await booksAPI({
-    method: 'GET',
-    path: 'contacts',
-    params: {
-      contact_type: 'vendor',
-      ...(searchText ? { search_text: searchText } : {}),
-    },
-  })
-  console.log('[getBooksVendors] parsed result keys:', res ? Object.keys(res) : 'null/undefined')
-  console.log('[getBooksVendors] parsed result:', JSON.stringify(res, null, 2))
-  console.log('[getBooksVendors] contacts:', res?.contacts)
-  return res?.contacts ?? []
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Zoho Books — Items
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Items & Accounts ─────────────────────────────────────────────────────────
 
 export async function getBooksItems() {
-  console.log('[getBooksItems] fetching...')
-  const res = await booksAPI({ method: 'GET', path: 'items' })
-  console.log('[getBooksItems] items count:', res?.items?.length)
+  const res = await booksRequest('GET', 'items')
+  console.log('[Books] items:', res?.items?.length)
   return res?.items ?? []
 }
 
 export async function getBooksAccounts() {
-  console.log('[getBooksAccounts] fetching all active accounts...')
-  const res = await booksAPI({
-    method: 'GET',
-    path: 'chartofaccounts',
-    params: { filter_by: 'AccountType.Active' },
-  })
-  console.log('[getBooksAccounts] accounts:', res?.chartofaccounts?.length)
-  console.log('[getBooksAccounts] accounts list:', res?.chartofaccounts)
+  const res = await booksRequest('GET', 'chartofaccounts', { filter_by: 'AccountType.Active' })
+  console.log('[Books] accounts:', res?.chartofaccounts?.length)
   return res?.chartofaccounts ?? []
 }
 
-export async function createBooksItem(itemData) {
-  console.log('[createBooksItem] payload:', itemData)
-  const res = await booksAPI({ method: 'POST', path: 'items', body: itemData })
-  console.log('[createBooksItem] response:', res)
-  return res
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Zoho Books — Bills
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Bills ────────────────────────────────────────────────────────────────────
 
 export async function getBillsList(vendorId) {
-  console.log('[getBillsList] vendorId:', vendorId)
-  const res = await booksAPI({
-    method: 'GET',
-    path: 'bills',
-    params: { vendor_id: vendorId },
-  })
-  console.log('[getBillsList] parsed result keys:', res ? Object.keys(res) : 'null/undefined')
-  console.log('[getBillsList] parsed result:', JSON.stringify(res, null, 2))
-  console.log('[getBillsList] bills:', res?.bills)
-  return res?.bills ?? []
+  const res = await booksRequest('GET', 'bills')
+  const all = res?.bills ?? []
+  const vid = String(vendorId)
+  const matched = all.filter((b) => String(b.vendor_id) === vid)
+  console.log('[Books] bills:', matched.length, '/', all.length, 'for vendor', vid)
+  return matched
 }
 
 export async function getBillDetails(billId) {
-  console.log('[getBillDetails] billId:', billId)
-  const res = await booksAPI({
-    method: 'GET',
-    path: `bills/${billId}`,
-  })
-  console.log('[getBillDetails] bill:', res?.bill)
+  const res = await booksRequest('GET', `bills/${billId}`)
   return res?.bill ?? null
 }
 
 export async function createBooksBill(payload) {
-  console.log('[createBooksBill] payload:', JSON.stringify(payload, null, 2))
-  const res = await booksAPI({ method: 'POST', path: 'bills', body: payload })
-  console.log('[createBooksBill] response code:', res?.code, 'message:', res?.message)
-  console.log('[createBooksBill] full response:', JSON.stringify(res, null, 2))
-  return res
+  return booksRequest('POST', 'bills', payload)
 }
 
 export async function updateBooksBill(billId, payload) {
-  console.log('[updateBooksBill] billId:', billId)
-  console.log('[updateBooksBill] payload:', JSON.stringify(payload, null, 2))
-  const res = await booksAPI({ method: 'PUT', path: `bills/${billId}`, body: payload })
-  console.log('[updateBooksBill] response code:', res?.code, 'message:', res?.message)
-  console.log('[updateBooksBill] full response:', JSON.stringify(res, null, 2))
-  return res
+  return booksRequest('PUT', `bills/${billId}`, payload)
+}
+
+export async function markBillOpen(billId) {
+  return booksRequest('POST', `bills/${billId}/status/open`)
+}
+
+// ── Purchase Orders ──────────────────────────────────────────────────────────
+
+export async function getPurchaseOrdersList(vendorId) {
+  const res = await booksRequest('GET', 'purchaseorders')
+  const all = res?.purchaseorders ?? []
+  const vid = String(vendorId)
+  const matched = all.filter((po) => String(po.vendor_id) === vid)
+  console.log('[Books] POs:', matched.length, '/', all.length, 'for vendor', vid)
+  return matched
+}
+
+export async function getPurchaseOrderDetails(poId) {
+  const res = await booksRequest('GET', `purchaseorders/${poId}`)
+  return res?.purchaseorder ?? null
+}
+
+export async function createPurchaseOrder(payload) {
+  return booksRequest('POST', 'purchaseorders', payload)
+}
+
+export async function updatePurchaseOrder(poId, payload) {
+  return booksRequest('PUT', `purchaseorders/${poId}`, payload)
+}
+
+export async function markPOOpen(poId) {
+  return booksRequest('POST', `purchaseorders/${poId}/status/open`)
+}
+
+export async function markPOBilled(poId) {
+  return booksRequest('POST', `purchaseorders/${poId}/status/billed`)
+}
+
+export async function markPOCancelled(poId) {
+  return booksRequest('POST', `purchaseorders/${poId}/status/cancelled`)
+}
+
+// ── Vendor Payments ──────────────────────────────────────────────────────────
+
+export async function createVendorPayment(payload) {
+  return booksRequest('POST', 'vendorpayments', payload)
 }

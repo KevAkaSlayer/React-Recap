@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { AccountPickerField } from './AccountPickerField'
 
 const cellClass = 'px-3 py-2 align-top'
 
@@ -16,7 +17,10 @@ const inputClass =
  * Typing a custom name (without selecting) creates the bill with just the name; no
  * separate Books item is created.
  */
-export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemove, disabled }) {
+/**
+ * @param rateField - 'rate' for bills (items with selling rate), 'purchase_rate' for POs
+ */
+export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemove, disabled, rateField = 'rate' }) {
   // Local display value for the combobox input — kept in sync with item.name
   const [inputValue, setInputValue] = useState(item.name ?? '')
   const [open, setOpen] = useState(false)
@@ -27,10 +31,13 @@ export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemo
     setInputValue(item.name ?? '')
   }, [item.name])
 
-  // Filter suggestions: if nothing typed show all, otherwise filter by name
+  // Only show items that have a value in the relevant rate field
+  const eligibleItems = items.filter((i) => parseFloat(i[rateField]) > 0)
+
+  // Filter by search text
   const suggestions = inputValue.trim()
-    ? items.filter((i) => i.name.toLowerCase().includes(inputValue.trim().toLowerCase()))
-    : items
+    ? eligibleItems.filter((i) => i.name.toLowerCase().includes(inputValue.trim().toLowerCase()))
+    : eligibleItems
 
   function handleInputChange(e) {
     const val = e.target.value
@@ -45,9 +52,9 @@ export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemo
     setOpen(false)
     onChange({
       item_id: selected.item_id,
-      account_id: '',           // clear account when existing item linked
+      account_id: '',
       name: selected.name,
-      rate: selected.rate ?? 0,
+      rate: selected[rateField] ?? selected.rate ?? 0,
       description: selected.description ?? '',
     })
   }
@@ -100,7 +107,7 @@ export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemo
                 >
                   <span className="truncate">{i.name}</span>
                   <span className="shrink-0 text-xs text-slate-400">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(i.rate ?? 0)}
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(i[rateField] ?? i.rate ?? 0)}
                   </span>
                 </li>
               ))}
@@ -109,40 +116,14 @@ export function LineItemRow({ item, items, accounts, onChange, onRemove, canRemo
         </div>
 
         {/* Account picker — required by Zoho Books when no item_id is set */}
-        {!item.item_id && (() => {
-          const accs = accounts ?? []
-          // Group by account_type for easier navigation
-          const groups = accs.reduce((map, a) => {
-            const type = a.account_type ?? 'Other'
-            if (!map[type]) map[type] = []
-            map[type].push(a)
-            return map
-          }, {})
-          return (
-            <select
-              value={item.account_id}
-              onChange={(e) => onChange({ account_id: e.target.value })}
-              disabled={disabled}
-              className={
-                'mt-1 w-full rounded-md border px-2 py-1.5 text-xs bg-white text-slate-700 ' +
-                'transition focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ' +
-                'disabled:bg-slate-50 disabled:cursor-not-allowed ' +
-                (item.account_id ? 'border-slate-200' : 'border-amber-300 bg-amber-50')
-              }
-            >
-              <option value="">— Select account —</option>
-              {Object.entries(groups).map(([type, list]) => (
-                <optgroup key={type} label={type}>
-                  {list.map((a) => (
-                    <option key={a.account_id} value={a.account_id}>
-                      {a.account_name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          )
-        })()}
+        {!item.item_id && (
+          <AccountPickerField
+            value={item.account_id}
+            onChange={(accountId) => onChange({ account_id: accountId })}
+            accounts={accounts ?? []}
+            disabled={disabled}
+          />
+        )}
       </td>
 
       {/* Description */}

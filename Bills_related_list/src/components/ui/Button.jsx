@@ -10,6 +10,10 @@ export function Button({ children, loading = false, disabled, variant = 'primary
       'focus:ring-emerald-500 active:scale-[0.98]',
     ghost:
       'bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-slate-300 border border-slate-200',
+    outline:
+      'bg-white text-emerald-600 border border-emerald-300 shadow-sm ' +
+      'hover:bg-emerald-50 hover:border-emerald-400 ' +
+      'focus:ring-emerald-500 active:scale-[0.98]',
     danger:
       'bg-rose-600 text-white shadow-sm shadow-rose-200 ' +
       'hover:bg-rose-700 hover:shadow-md hover:shadow-rose-200 ' +

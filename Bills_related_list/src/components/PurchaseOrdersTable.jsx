@@ -4,15 +4,18 @@ import { Button } from './ui/Button'
 const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 
 const STATUS = {
-  draft:    { label: 'Draft',    cls: 'bg-slate-100 text-slate-600' },
-  open:     { label: 'Open',     cls: 'bg-blue-50 text-blue-700' },
-  overdue:  { label: 'Overdue',  cls: 'bg-rose-50 text-rose-700' },
-  paid:     { label: 'Paid',     cls: 'bg-emerald-50 text-emerald-700' },
-  void:     { label: 'Void',     cls: 'bg-slate-100 text-slate-400' },
-  pending_approval: { label: 'Pending', cls: 'bg-amber-50 text-amber-700' },
+  draft:            { label: 'Draft',            cls: 'bg-slate-100 text-slate-600' },
+  open:             { label: 'Open',             cls: 'bg-blue-50 text-blue-700' },
+  billed:           { label: 'Billed',           cls: 'bg-emerald-50 text-emerald-700' },
+  partially_billed: { label: 'Partially Billed', cls: 'bg-amber-50 text-amber-700' },
+  cancelled:        { label: 'Cancelled',        cls: 'bg-rose-50 text-rose-600' },
+  closed:           { label: 'Closed',           cls: 'bg-slate-100 text-slate-400' },
+  issued:           { label: 'Issued',           cls: 'bg-indigo-50 text-indigo-700' },
+  overdue:          { label: 'Overdue',          cls: 'bg-rose-50 text-rose-700' },
+  pending_approval: { label: 'Pending Approval', cls: 'bg-amber-50 text-amber-700' },
 }
 
-const NON_EDITABLE = new Set(['paid', 'void'])
+const NON_EDITABLE = new Set(['billed', 'cancelled', 'closed'])
 
 function StatusBadge({ status }) {
   const s = STATUS[status] ?? { label: status, cls: 'bg-slate-100 text-slate-600' }
@@ -23,12 +26,12 @@ function StatusBadge({ status }) {
   )
 }
 
-export function BillsTable({ bills, loading, error, onNewBill, onEditBill, onRefresh, onMarkOpen, onRecordPayment }) {
+export function PurchaseOrdersTable({ orders, bills, loading, error, onNewPO, onEditPO, onRefresh, onMarkOpen, onConvertToBill }) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <Spinner size={8} />
-        <p className="text-sm text-slate-400">Syncing bills from Zoho Books…</p>
+        <p className="text-sm text-slate-400">Syncing purchase orders from Zoho Books…</p>
       </div>
     )
   }
@@ -49,7 +52,7 @@ export function BillsTable({ bills, loading, error, onNewBill, onEditBill, onRef
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-500">
-          {bills.length} bill{bills.length !== 1 ? 's' : ''}
+          {orders.length} order{orders.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-2">
           <button
@@ -62,87 +65,96 @@ export function BillsTable({ bills, loading, error, onNewBill, onEditBill, onRef
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
-          <Button onClick={onNewBill}>
+          <Button onClick={onNewPO}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            New Bill
+            New PO
           </Button>
         </div>
       </div>
 
-      {/* Empty state */}
-      {bills.length === 0 ? (
+      {orders.length === 0 ? (
         <div className="text-center py-16 rounded-xl border border-dashed border-slate-200">
           <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
             <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-slate-600 mb-1">No bills yet</p>
-          <p className="text-xs text-slate-400 mb-4">No bills found for this vendor in Zoho Books.</p>
-          <Button onClick={onNewBill}>Create First Bill</Button>
+          <p className="text-sm font-medium text-slate-600 mb-1">No purchase orders yet</p>
+          <p className="text-xs text-slate-400 mb-4">No POs found for this vendor in Zoho Books.</p>
+          <Button onClick={onNewPO}>Create First PO</Button>
         </div>
       ) : (
-        /* Bills table */
         <div className="rounded-xl border border-slate-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Bill #</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">PO #</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Date</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Due Date</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Delivery Date</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500">Status</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500">Total</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500">Balance</th>
-                <th className="w-16" />
+                <th className="w-40" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {bills.map((bill) => {
-                const editable = !NON_EDITABLE.has(bill.status)
+              {orders.map((po) => {
+                const editable = !NON_EDITABLE.has(po.status)
+                // Find bills linked to this PO (by reference_number matching PO number)
+                const linkedBills = (bills ?? []).filter(
+                  (b) => b.reference_number === po.purchaseorder_number
+                )
                 return (
                   <tr
-                    key={bill.bill_id}
+                    key={po.purchaseorder_id}
                     className={`hover:bg-slate-50/60 transition ${editable ? 'cursor-pointer' : ''}`}
-                    onClick={() => editable && onEditBill(bill.bill_id)}
+                    onClick={() => editable && onEditPO(po.purchaseorder_id)}
                   >
-                    <td className="px-4 py-3 font-medium text-slate-800">{bill.bill_number}</td>
-                    <td className="px-4 py-3 text-slate-600">{bill.date}</td>
-                    <td className="px-4 py-3 text-slate-600">{bill.due_date || '—'}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={bill.status} />
+                      <span className="font-medium text-slate-800">{po.purchaseorder_number}</span>
+                      {linkedBills.length > 0 && (
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {linkedBills.map((b) => (
+                            <span key={b.bill_id} className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" />
+                              </svg>
+                              {b.bill_number}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-right text-slate-700 font-medium">
-                      {fmt.format(bill.total ?? 0)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-slate-600">
-                      {fmt.format(bill.balance ?? 0)}
-                    </td>
+                    <td className="px-4 py-3 text-slate-600">{po.date}</td>
+                    <td className="px-4 py-3 text-slate-600">{po.delivery_date || '—'}</td>
+                    <td className="px-4 py-3"><StatusBadge status={po.status} /></td>
+                    <td className="px-4 py-3 text-right text-slate-700 font-medium">{fmt.format(po.total ?? 0)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1.5">
-                        {bill.status === 'draft' && (
+                        {po.status === 'draft' && (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onMarkOpen(bill.bill_id) }}
+                            onClick={(e) => { e.stopPropagation(); onMarkOpen(po.purchaseorder_id) }}
                             className="rounded-lg px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition"
                           >
                             Mark Open
                           </button>
                         )}
-                        {(bill.status === 'open' || bill.status === 'overdue') && (
+                        {(po.status === 'open' || po.status === 'partially_billed') && (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onRecordPayment(bill) }}
+                            onClick={(e) => { e.stopPropagation(); onConvertToBill(po) }}
                             className="rounded-lg px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition"
                           >
-                            Record Payment
+                            Convert to Bill
                           </button>
                         )}
                         {editable && (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onEditBill(bill.bill_id) }}
+                            onClick={(e) => { e.stopPropagation(); onEditPO(po.purchaseorder_id) }}
                             className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
                           >
                             Edit

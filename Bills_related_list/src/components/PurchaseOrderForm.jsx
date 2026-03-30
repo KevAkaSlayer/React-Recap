@@ -11,7 +11,7 @@ function todayISO() {
 function emptyLineItem() {
   return {
     id: Math.random().toString(36).slice(2),
-    line_item_id: null,   // null = new row; string = existing Books line item
+    line_item_id: null,
     item_id: '',
     account_id: '',
     name: '',
@@ -21,7 +21,6 @@ function emptyLineItem() {
   }
 }
 
-/** Map a Books line_item object to our internal row shape */
 function fromBooksLineItem(li) {
   return {
     id: li.line_item_id,
@@ -35,45 +34,73 @@ function fromBooksLineItem(li) {
   }
 }
 
-/** Bill create / edit form. */
-export function BillForm({ mode, initialData, defaultVendor, items, accounts, submitting, formRef, onSubmit }) {
-  const d = initialData // shorthand
+/** Purchase Order create / edit form. */
+function generateNextPONumber(existingOrders) {
+  let maxNum = 0
+  for (const po of existingOrders) {
+    const match = po.purchaseorder_number?.match(/^PO-(\d+)$/i)
+    if (match) {
+      const num = parseInt(match[1], 10)
+      if (num > maxNum) maxNum = num
+    }
+  }
+  return 'PO-' + String(maxNum + 1).padStart(5, '0')
+}
 
-  const [vendor, setVendor] = useState(
-    d ? { id: d.vendor_id, name: d.vendor_name } : defaultVendor ?? null,
+export function PurchaseOrderForm({ mode, initialData, defaultVendor, items, accounts, existingOrders, submitting, formRef, onSubmit }) {
+  const isEdit = mode === 'edit'
+
+  const [vendor] = useState(
+    isEdit && initialData
+      ? { id: initialData.vendor_id, name: initialData.vendor_name }
+      : defaultVendor ?? null,
   )
 
+  const initAddr = isEdit ? (initialData?.delivery_address ?? {}) : {}
+
   const [form, setForm] = useState({
-    bill_number: d?.bill_number ?? '',
-    date: d?.date ?? todayISO(),
-    due_date: d?.due_date ?? '',
-    reference_number: d?.reference_number ?? '',
-    notes: d?.notes ?? '',
+    purchaseorder_number: isEdit
+      ? (initialData?.purchaseorder_number ?? '')
+      : generateNextPONumber(existingOrders ?? []),
+    date: isEdit ? (initialData?.date ?? todayISO()) : todayISO(),
+    delivery_date: isEdit ? (initialData?.delivery_date ?? '') : '',
+    reference_number: isEdit ? (initialData?.reference_number ?? '') : '',
+    notes: isEdit ? (initialData?.notes ?? '') : '',
+    // Delivery address
+    addr_address: initAddr.address ?? '',
+    addr_city: initAddr.city ?? '',
+    addr_state: initAddr.state ?? '',
+    addr_zip: initAddr.zip ?? '',
+    addr_country: initAddr.country ?? '',
   })
 
   const [lineItems, setLineItems] = useState(
-    d?.line_items?.length
-      ? d.line_items.map(fromBooksLineItem)
+    isEdit && initialData?.line_items?.length
+      ? initialData.line_items.map(fromBooksLineItem)
       : [emptyLineItem()],
   )
 
-  // Sync when initialData arrives async (edit mode loads details after modal opens)
   useEffect(() => {
-    if (!initialData) return
-    setVendor({ id: initialData.vendor_id, name: initialData.vendor_name })
+    if (!isEdit || !initialData) return
+    const addr = initialData.delivery_address ?? {}
     setForm({
-      bill_number: initialData.bill_number ?? '',
+      purchaseorder_number: initialData.purchaseorder_number ?? '',
       date: initialData.date ?? todayISO(),
-      due_date: initialData.due_date ?? '',
+      delivery_date: initialData.delivery_date ?? '',
       reference_number: initialData.reference_number ?? '',
       notes: initialData.notes ?? '',
+      addr_address: addr.address ?? '',
+      addr_city: addr.city ?? '',
+      addr_state: addr.state ?? '',
+      addr_zip: addr.zip ?? '',
+      addr_country: addr.country ?? '',
     })
     setLineItems(
       initialData.line_items?.length
         ? initialData.line_items.map(fromBooksLineItem)
         : [emptyLineItem()],
     )
-  }, [initialData])
+  }, [initialData, isEdit])
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -100,20 +127,16 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
     e.preventDefault()
 
     if (!vendor?.id) { toast.error('Vendor is required.'); return }
-    if (!form.bill_number.trim()) { toast.error('Bill Number is required.'); return }
-    if (!form.date) { toast.error('Bill Date is required.'); return }
+    if (!form.purchaseorder_number.trim()) { toast.error('PO Number is required.'); return }
+    if (!form.date) { toast.error('PO Date is required.'); return }
+    if (!form.addr_address.trim()) { toast.error('Delivery Address is required.'); return }
 
-    // A row is valid if it has item_id (existing) OR both name + account_id (custom)
     const validRows = lineItems.filter((row) =>
       row.item_id ? true : (row.name.trim() && row.account_id)
     )
     if (validRows.length === 0) {
       const hasNameOnly = lineItems.some((row) => !row.item_id && row.name.trim() && !row.account_id)
-      toast.error(
-        hasNameOnly
-          ? 'Select an Account for each custom line item.'
-          : 'At least one line item is required.'
-      )
+      toast.error(hasNameOnly ? 'Select an Account for each custom line item.' : 'At least one line item is required.')
       return
     }
 
@@ -123,9 +146,7 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
         quantity: parseFloat(row.quantity) || 1,
         rate: parseFloat(row.rate) || 0,
       }
-      // Preserve line_item_id for existing rows (required by update API)
       if (row.line_item_id) base.line_item_id = row.line_item_id
-      // Zoho Books requires item_id OR account_id on every line item
       if (row.item_id) {
         base.item_id = row.item_id
       } else {
@@ -135,28 +156,36 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
       return base
     })
 
+    const delivery_address = {
+      address: form.addr_address.trim(),
+      ...(form.addr_city.trim() && { city: form.addr_city.trim() }),
+      ...(form.addr_state.trim() && { state: form.addr_state.trim() }),
+      ...(form.addr_zip.trim() && { zip: form.addr_zip.trim() }),
+      ...(form.addr_country.trim() && { country: form.addr_country.trim() }),
+    }
+
     const payload = {
       vendor_id: vendor.id,
-      bill_number: form.bill_number.trim(),
+      purchaseorder_number: form.purchaseorder_number.trim(),
       date: form.date,
-      ...(form.due_date && { due_date: form.due_date }),
+      delivery_address,
+      ...(form.delivery_date && { delivery_date: form.delivery_date }),
       ...(form.reference_number.trim() && { reference_number: form.reference_number.trim() }),
       ...(form.notes.trim() && { notes: form.notes.trim() }),
       line_items,
     }
 
-    console.log('[BillForm] submit payload:', payload)
+    console.log('[PurchaseOrderForm] submit payload:', payload)
     onSubmit(payload)
   }
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-7">
 
-      {/* ── Vendor ───────────────────────────────────────────── */}
+      {/* Vendor (locked) */}
       <section>
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Vendor</p>
-        <Label htmlFor="vendor" required>Vendor Name</Label>
-        {/* Vendor is locked to the CRM context — always read-only */}
+        <Label required>Vendor Name</Label>
         <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
           <svg className="h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -166,75 +195,78 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
         </div>
       </section>
 
-      {/* ── Bill Details ─────────────────────────────────────── */}
+      {/* PO Details */}
       <section>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Bill Details</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">PO Details</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bill_number" required>Bill Number</Label>
+            <Label htmlFor="po_number" required>PO Number</Label>
             <Input
-              id="bill_number"
-              value={form.bill_number}
-              onChange={(e) => setField('bill_number', e.target.value)}
-              placeholder="BILL-001"
+              id="po_number"
+              value={form.purchaseorder_number}
+              onChange={(e) => setField('purchaseorder_number', e.target.value)}
+              placeholder="PO-001"
               disabled={submitting}
             />
           </div>
           <div>
-            <Label htmlFor="date" required>Bill Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={form.date}
-              onChange={(e) => setField('date', e.target.value)}
-              disabled={submitting}
-            />
+            <Label htmlFor="po_date" required>Date</Label>
+            <Input id="po_date" type="date" value={form.date} onChange={(e) => setField('date', e.target.value)} disabled={submitting} />
           </div>
           <div>
-            <Label htmlFor="due_date">Due Date</Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={form.due_date}
-              onChange={(e) => setField('due_date', e.target.value)}
-              disabled={submitting}
-            />
+            <Label htmlFor="delivery_date">Delivery Date</Label>
+            <Input id="delivery_date" type="date" value={form.delivery_date} onChange={(e) => setField('delivery_date', e.target.value)} disabled={submitting} />
           </div>
           <div>
-            <Label htmlFor="reference_number">Reference #</Label>
-            <Input
-              id="reference_number"
-              value={form.reference_number}
-              onChange={(e) => setField('reference_number', e.target.value)}
-              placeholder="Vendor invoice number"
-              disabled={submitting}
-            />
+            <Label htmlFor="po_ref">Reference #</Label>
+            <Input id="po_ref" value={form.reference_number} onChange={(e) => setField('reference_number', e.target.value)} placeholder="Ref number" disabled={submitting} />
           </div>
         </div>
         <div className="mt-4">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            value={form.notes}
-            onChange={(e) => setField('notes', e.target.value)}
-            placeholder="Internal notes for this bill…"
-            disabled={submitting}
-          />
+          <Label htmlFor="po_notes">Notes</Label>
+          <Textarea id="po_notes" value={form.notes} onChange={(e) => setField('notes', e.target.value)} placeholder="Internal notes…" disabled={submitting} />
         </div>
       </section>
 
-      {/* ── Line Items ───────────────────────────────────────── */}
+      {/* Delivery Address */}
+      <section>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+          Delivery Address <span className="text-rose-500 ml-0.5">*</span>
+        </p>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="addr_address" required>Address</Label>
+            <Input id="addr_address" value={form.addr_address} onChange={(e) => setField('addr_address', e.target.value)} placeholder="Street address" disabled={submitting} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="addr_city">City</Label>
+              <Input id="addr_city" value={form.addr_city} onChange={(e) => setField('addr_city', e.target.value)} placeholder="City" disabled={submitting} />
+            </div>
+            <div>
+              <Label htmlFor="addr_state">State</Label>
+              <Input id="addr_state" value={form.addr_state} onChange={(e) => setField('addr_state', e.target.value)} placeholder="State" disabled={submitting} />
+            </div>
+            <div>
+              <Label htmlFor="addr_zip">ZIP / Postal Code</Label>
+              <Input id="addr_zip" value={form.addr_zip} onChange={(e) => setField('addr_zip', e.target.value)} placeholder="ZIP" disabled={submitting} />
+            </div>
+            <div>
+              <Label htmlFor="addr_country">Country</Label>
+              <Input id="addr_country" value={form.addr_country} onChange={(e) => setField('addr_country', e.target.value)} placeholder="Country" disabled={submitting} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Line Items */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
             Line Items <span className="text-rose-500 ml-0.5">*</span>
           </p>
-          <button
-            type="button"
-            onClick={addLineItem}
-            disabled={submitting}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition"
-          >
+          <button type="button" onClick={addLineItem} disabled={submitting}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -260,6 +292,7 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
                   key={row.id}
                   item={row}
                   items={items}
+                  rateField="purchase_rate"
                   onChange={(updates) => updateLineItem(row.id, updates)}
                   onRemove={() => removeLineItem(row.id)}
                   canRemove={lineItems.length > 1}
@@ -271,7 +304,6 @@ export function BillForm({ mode, initialData, defaultVendor, items, accounts, su
           </table>
         </div>
 
-        {/* Total */}
         <div className="mt-3 flex justify-end">
           <div className="rounded-xl bg-slate-50 border border-slate-200 px-5 py-3 min-w-36 text-right">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Total</p>
